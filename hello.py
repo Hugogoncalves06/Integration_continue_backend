@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 from pymongo import MongoClient
 import os
-from bson import json_util
+from flask_cors import CORS
 import json
 
 app = Flask(__name__)
@@ -44,7 +43,7 @@ def get_users():
     try:
         users = list(users_collection.find())
         # Convertir les ObjectId en strings pour la sérialisation JSON
-        return json.loads(json_util.dumps(users)), 200
+        return json.loads(str(users)), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
