@@ -1,0 +1,24 @@
+{
+    "version": 1,
+    "builds": [
+      {
+        "src": "hello.py",
+        "use": "@vercel/python",
+        "config": {
+          "maxDuration": 10
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "hello.py"
+      }
+    ],
+    "git": {
+      "deploymentEnabled": {
+        "main": false
+      }
+    }
+  }
+  
