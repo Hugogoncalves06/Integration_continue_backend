@@ -6,8 +6,8 @@ on:
       - master
 
 env:
-  REGISTRY: hugogoncalves06
-  IMAGE_NAME: ci_cd_backend_flask_ynov
+  REGISTRY: docker.io
+  IMAGE_NAME: hugogoncalves06/ci_cd_backend_flask_ynov
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -26,7 +26,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
+          username: hugogoncalves06
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
