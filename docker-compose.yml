@@ -1,43 +1,57 @@
 services:
-  mongodb:
-    image: mongo:latest
+  mysql:
+    image: mysql:8.0
     restart: always
     ports:
-      - "27017:27017"
+      - "3306:3306"
     volumes:
-      - mongodb_data:/data/db
-      - ./scripts/import_data.sh:/docker-entrypoint-initdb.d/init-mongo.sh
+      - mysql_data:/var/lib/mysql
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-
-  mongo-express:
-    image: mongo-express:latest
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=users_db
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
     restart: always
     ports:
-      - "8081:8081"
+      - "8081:80"
     environment:
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
-      - ME_CONFIG_MONGODB_URL=mongodb://admin:password@mongodb:27017/
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=password
+      - PMA_HOST=mysql
+      - MYSQL_ROOT_PASSWORD=password
     depends_on:
-      - mongodb
+      - mysql
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8000:8000" 
     environment:
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=users_db
       - FLASK_ENV=development
       - SECRET_KEY=your_secret_key
     depends_on:
-      - mongo-express
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
-  mongodb_data:
+  mysql_data:
     driver: local
