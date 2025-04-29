@@ -15,10 +15,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'votre_clé_secrète_par_déf
 # MySQL connection
 def get_db():
     return mysql.connector.connect(
-        host="mysql-integrationcontinue.alwaysdata.net",
-        user="411197",
-        password="PasswordProd",
-        database="integrationcontinue_prod"
+        host=os.getenv('MYSQL_HOST', 'localhost'),
+        user=os.getenv('MYSQL_USER', 'admin'),
+        password=os.getenv('MYSQL_PASSWORD', 'password'),
+        database=os.getenv('MYSQL_DATABASE', 'users_db')
     )
 
 def wait_for_db(max_retries=30, delay=2):
@@ -26,10 +26,10 @@ def wait_for_db(max_retries=30, delay=2):
     while retries < max_retries:
         try:
             conn = mysql.connector.connect(
-                host="mysql-integrationcontinue.alwaysdata.net",
-                user="411197",
-                password="PasswordProd",
-                database="integrationcontinue_prod"
+                host=os.getenv('MYSQL_HOST', 'localhost'),
+                user=os.getenv('MYSQL_USER', 'admin'),
+                password=os.getenv('MYSQL_PASSWORD', 'password'),
+                database=os.getenv('MYSQL_DATABASE', 'users_db')
             )
             conn.close()
             return True
