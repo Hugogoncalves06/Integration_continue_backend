@@ -15,10 +15,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'votre_clé_secrète_par_déf
 # MySQL connection
 def get_db():
     return mysql.connector.connect(
-        host=os.getenv('MYSQL_HOST', 'localhost'),
-        user=os.getenv('MYSQL_USER', 'admin'),
-        password=os.getenv('MYSQL_PASSWORD', 'password'),
-        database=os.getenv('MYSQL_DATABASE', 'users_db')
+        host="mysql-integrationcontinue.alwaysdata.net",
+        user="411197",
+        password="PasswordProd",
+        database="integrationcontinue_prod"
     )
 
 def wait_for_db(max_retries=30, delay=2):
@@ -26,10 +26,10 @@ def wait_for_db(max_retries=30, delay=2):
     while retries < max_retries:
         try:
             conn = mysql.connector.connect(
-                host=os.getenv('MYSQL_HOST', 'localhost'),
-                user=os.getenv('MYSQL_USER', 'admin'),
-                password=os.getenv('MYSQL_PASSWORD', 'password'),
-                database=os.getenv('MYSQL_DATABASE', 'users_db')
+                host="mysql-integrationcontinue.alwaysdata.net",
+                user="411197",
+                password="PasswordProd",
+                database="integrationcontinue_prod"
             )
             conn.close()
             return True
@@ -39,45 +39,8 @@ def wait_for_db(max_retries=30, delay=2):
             time.sleep(delay)
     return False
 
-# Initialize database
-def init_db():
-    db = get_db()
-    cursor = db.cursor()
-    
-    # Create users table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            firstName VARCHAR(255) NOT NULL,
-            lastName VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            birthDate DATE NOT NULL,
-            city VARCHAR(255) NOT NULL,
-            postalCode VARCHAR(5) NOT NULL
-        )
-    ''')
-    
-    # Create administrators table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS administrators (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            role VARCHAR(50) NOT NULL
-        )
-    ''')
-    
-    db.commit()
-    cursor.close()
-    db.close()
-
-# Remplacer l'initialisation directe par une initialisation avec retry
-if not wait_for_db():
-    print("Impossible de se connecter à la base de données après plusieurs tentatives")
-    exit(1)
-
 with app.app_context():
-    init_db()
+    get_db()
 
 @app.route("/")
 def hello_world():
