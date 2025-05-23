@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from functools import wraps
 import mysql.connector
 import os
 import jwt
@@ -154,6 +155,24 @@ def delete_user(user_id):
         cursor.close()
         db.close()
         return jsonify({"message": "Utilisateur supprimé avec succès"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/users/<int:user_id>", methods=['GET'])
+@admin_required
+def get_user(user_id):
+    try:
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+        db.close()
+
+        if not user:
+            return jsonify({"error": "Utilisateur non trouvé"}), 404
+
+        return jsonify(user), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
