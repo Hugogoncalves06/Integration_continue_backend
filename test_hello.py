@@ -96,7 +96,7 @@ def test_create_user_duplicate_email(client):
     # Second creation should fail with 409
     response2 = client.post('/api/users', data=json.dumps(data), content_type='application/json')
     assert response2.status_code == 409
-    assert b'dej' in response2.data or b'déjà' in response2.data
+    assert b'dej' in response2.data or b'dej' in response2.data
 
 def test_login_missing_fields(client):
     response = client.post('/api/login', data=json.dumps({'email': 'admin@example.com'}), content_type='application/json')
