@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     firstName VARCHAR(255) NOT NULL,
     lastName VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
     birthDate DATE NOT NULL,
     city VARCHAR(255) NOT NULL,
     postalCode VARCHAR(5) NOT NULL,
@@ -15,6 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Add some test data
-INSERT INTO users (firstName, lastName, email, birthDate, city, postalCode) VALUES
-('John', 'Doe', 'john.doe@test.com', '1990-01-01', 'Paris', '75000'),
-('Jane', 'Smith', 'jane.smith@test.com', '1985-05-15', 'Lyon', '69000');
+INSERT INTO users (firstName, lastName, email, password, birthDate, city, postalCode) VALUES
+('John', 'Doe', 'dev@test.com', '$2b$12$t33JLa1geMBpJgBOKdyBQ./P0a/JH9L2jzqlZJWCFd66sl7dm3PCi', '1990-01-01', 'Paris', '75000'),
+('Jane', 'Smith', 'jane.smith@test.com', '$2b$12$t33JLa1geMBpJgBOKdyBQ./P0a/JH9L2jzqlZJWCFd66sl7dm3PCi', '1985-05-15', 'Lyon', '69000');

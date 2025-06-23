@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS administrators (
 );
 
 INSERT INTO administrators (email, password) 
-VALUES ('admin@example.com', 'admin123')
-ON DUPLICATE KEY UPDATE password = 'admin123';
+VALUES ('admin@example.com', '$2b$12$testhash')
+ON DUPLICATE KEY UPDATE password = '$2b$12$testhash';

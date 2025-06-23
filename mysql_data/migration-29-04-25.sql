@@ -12,4 +12,5 @@ CREATE TABLE IF NOT EXISTS administrators (
 
 -- Insert administrator record
 INSERT INTO administrators (email, password, role)
-VALUES ('loise.fenoll@ynov.com', 'ANKymoUTFu4rbybmQ9Mt', 'admin');
+VALUES ('loise.fenoll@ynov.com', 'ANKymoUTFu4rbybmQ9Mt', 'admin')
+       ('admin@dev.com','$2b$12$t33JLa1geMBpJgBOKdyBQ./P0a/JH9L2jzqlZJWCFd66sl7dm3PCi', 'admin');

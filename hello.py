@@ -7,6 +7,7 @@ import jwt
 import time
 from datetime import datetime, timedelta
 from middleware import admin_required
+import bcrypt
 
 app = Flask(__name__)
 CORS(app)
@@ -64,35 +65,34 @@ def health_check():
 def create_user():
     try:
         user_data = request.json
-        required_fields = ['firstName', 'lastName', 'email', 'birthDate', 'city', 'postalCode']
+        required_fields = ['firstName', 'lastName', 'email', 'birthDate', 'city', 'postalCode', 'password']
         for field in required_fields:
-            if field not in user_data:
-                return jsonify({"error": f"Missing required field: {field}"}), 400
+            if not user_data.get(field):
+                return jsonify({'error': f'Le champ {field} est requis'}), 400
+
+        # Sécurité du mot de passe
+        password = user_data['password']
+        if len(password) < 8 or not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
+            return jsonify({'error': 'Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.'}), 400
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         db = get_db()
         cursor = db.cursor()
-        
-        # Check if email exists
-        cursor.execute("SELECT * FROM users WHERE email = %s", (user_data['email'],))
+        # Vérifier si l'email existe déjà
+        cursor.execute("SELECT id FROM users WHERE email=%s", (user_data['email'],))
         if cursor.fetchone():
-            return jsonify({"error": "Email already exists"}), 409
-
-        # Insert user
-        sql = '''INSERT INTO users (firstName, lastName, email, birthDate, city, postalCode) 
-                VALUES (%s, %s, %s, %s, %s, %s)'''
-        values = (user_data['firstName'], user_data['lastName'], user_data['email'],
-                user_data['birthDate'], user_data['city'], user_data['postalCode'])
-        
-        cursor.execute(sql, values)
+            cursor.close()
+            db.close()
+            return jsonify({'error': 'Cet email est déjà utilisé'}), 409
+        # Insérer l'utilisateur
+        cursor.execute("INSERT INTO users (firstName, lastName, email, password, birthDate, city, postalCode) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (user_data['firstName'], user_data['lastName'], user_data['email'], hashed_password, user_data['birthDate'], user_data['city'], user_data['postalCode']))
         db.commit()
-        user_data['id'] = cursor.lastrowid
-        
         cursor.close()
         db.close()
-        return jsonify(user_data), 201
-        
+        return jsonify({"email": user_data['email']}), 201
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/users", methods=['GET'])
 def get_users():
@@ -110,33 +110,38 @@ def get_users():
 @app.route("/api/login", methods=['POST'])
 def login():
     try:
-        login_data = request.json
-        if not login_data or 'email' not in login_data or 'password' not in login_data:
-            return jsonify({"error": "Email et mot de passe requis"}), 400
-
+        data = request.json
+        print("Received login data:", data)  # Debugging line
+        if not data:
+            return jsonify({'error': 'Aucune donnée reçue'}), 400
+        email = data.get('email')
+        password = data.get('password')
+        if not email or not password:
+            return jsonify({'error': 'Email et mot de passe requis'}), 400
         db = get_db()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM administrators WHERE email = %s AND password = %s",
-                      (login_data['email'], login_data['password']))
+        # Vérifier dans users
+        cursor.execute("SELECT id, email, password, 'user' as role FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
+            # Générer un token (ici simplifié)
+            token = os.urandom(24).hex()
+            cursor.close()
+            db.close()
+            return jsonify({'token': token, 'email': user['email'], 'role': 'user'}), 200
+        # Vérifier dans administrators
+        cursor.execute("SELECT id, email, password, role FROM administrators WHERE email=%s", (email,))
         admin = cursor.fetchone()
-        
-        if not admin:
-            return jsonify({"error": "Email ou mot de passe incorrect"}), 401
-            
-        token = jwt.encode({
-            'email': admin['email'],
-            'exp': datetime.utcnow() + timedelta(hours=24)
-        }, app.config['SECRET_KEY'], algorithm='HS256')
-        
+        if admin and bcrypt.checkpw(password.encode('utf-8'), admin['password'].encode('utf-8')):
+            token = os.urandom(24).hex()
+            cursor.close()
+            db.close()
+            return jsonify({'token': token, 'email': admin['email'], 'role': admin['role']}), 200
         cursor.close()
         db.close()
-        return jsonify({
-            "token": token,
-            "email": admin['email']
-        }), 200
-        
+        return jsonify({'error': 'Identifiants invalides'}), 401
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route("/api/users/<int:user_id>", methods=['DELETE'])
 @admin_required
@@ -175,6 +180,35 @@ def get_user(user_id):
         return jsonify(user), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admins", methods=['POST'])
+@admin_required
+def create_admin():
+    try:
+        admin_data = request.json
+        required_fields = ['email', 'password', 'role']
+        for field in required_fields:
+            if not admin_data.get(field):
+                return jsonify({'error': f'Le champ {field} est requis'}), 400
+        password = admin_data['password']
+        if len(password) < 8 or not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
+            return jsonify({'error': 'Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.'}), 400
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT id FROM administrators WHERE email=%s", (admin_data['email'],))
+        if cursor.fetchone():
+            cursor.close()
+            db.close()
+            return jsonify({'error': 'Cet email est déjà utilisé'}), 409
+        cursor.execute("INSERT INTO administrators (email, password, role) VALUES (%s, %s, %s)",
+            (admin_data['email'], hashed_password, admin_data['role']))
+        db.commit()
+        cursor.close()
+        db.close()
+        return jsonify({"email": admin_data['email']}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=8000)
