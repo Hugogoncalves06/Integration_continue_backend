@@ -8,20 +8,18 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
-        
-        if not auth_header or not auth_header.startswith('Bearer '):
+        if not auth_header:
             return jsonify({'error': 'Token manquant'}), 401
-        
         try:
-            print("Authorization header:", auth_header)
-            token = auth_header.split(' ')[1]
-            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-            from hello import db 
+            from hello import get_db
+            payload = jwt.decode(auth_header, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            db = get_db()
             # Vérifier si l'utilisateur existe dans la collection administrators
-            admin = db.administrators.find_one({'email': payload['email']})
-            if not admin:
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM administrators WHERE email = %s", (payload['email'],))
+            admin = cursor.fetchone()
+            if (not admin or payload['role'] != admin['role']) and payload['role'] != 'admin':
                 return jsonify({'error': 'Non autorisé'}), 403
-                
         except jwt.ExpiredSignatureError:
             return jsonify({'error': 'Token expiré'}), 401
         except jwt.InvalidTokenError:
