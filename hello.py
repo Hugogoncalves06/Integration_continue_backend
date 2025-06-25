@@ -125,7 +125,7 @@ def login():
         user = cursor.fetchone()
         if user and bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
             # Générer un token (ici simplifié)
-            token = jwt.encode({'email': user['email'], 'role': 'user'}, app.config['SECRET_KEY'], algorithm='HS256')
+            token = jwt.encode({'email': user['email'], 'id': user['id'], 'firstName': user['firstName'], 'lastName': user['lastName'], 'role': 'user'}, app.config['SECRET_KEY'], algorithm='HS256')
             cursor.close()
             db.close()
             return jsonify({'token': token, 'email': user['email'], 'role': 'user'}), 200
@@ -133,7 +133,7 @@ def login():
         cursor.execute("SELECT id, email, password, role FROM administrators WHERE email=%s", (email,))
         admin = cursor.fetchone()
         if admin and bcrypt.checkpw(password.encode('utf-8'), admin['password'].encode('utf-8')):
-            token = jwt.encode({'email': admin['email'], 'role': admin['role']}, app.config['SECRET_KEY'], algorithm='HS256')
+            token = jwt.encode({'email': admin['email'], 'id': admin['id'], 'firstName': admin['firstName'], 'lastName': admin['lastName'], 'role': admin['role']}, app.config['SECRET_KEY'], algorithm='HS256')
             cursor.close()
             db.close()
             return jsonify({'token': token, 'email': admin['email'], 'role': admin['role']}), 200
