@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y default-libmysqlclient-dev build-essential && \
     apt-get clean && \
+    apt-get install -y mysql-client && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
