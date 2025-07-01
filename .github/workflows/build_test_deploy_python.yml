@@ -90,5 +90,5 @@ jobs:
           -H "Accept: application/vnd.github+json" \
           -H "Authorization: Bearer ${{ secrets.PERSONNAL_ACCESS_TOKEN }}" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          https://github.com/Hugogoncalves06/terraform_config/dispatches \
+          https://api.github.com/repos/Hugogoncalves06/terraform_config/dispatches \
           -d '{"event_type":"dispatch-event"}'
