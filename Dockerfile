@@ -4,9 +4,8 @@ WORKDIR /app
 
 # Install MySQL client
 RUN apt-get update && \
-    apt-get install -y default-libmysqlclient-dev build-essential && \
+    apt-get install -y default-libmysqlclient-dev build-essential mariadb-client && \
     apt-get clean && \
-    apt-get install -y mysql-client && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
